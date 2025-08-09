@@ -28,6 +28,13 @@ export async function POST(req: NextRequest) {
     const { sellers, maxPerSeller } = BodySchema.parse(json);
     const limit = Math.min(maxPerSeller ?? env.MAX_RESULTS_PER_SELLER, 1000);
 
+    if (!env.EBAY_CLIENT_ID || !env.EBAY_CLIENT_SECRET) {
+      return NextResponse.json(
+        { error: "EBAY_CLIENT_ID/EBAY_CLIENT_SECRET が未設定です。サーバーの環境変数(.env / Vercel)を確認してください。" },
+        { status: 400 }
+      );
+    }
+
     // Axios版で一括取得。limit制御は現状API側で200/ページのため、取得後slice
     const rows = await searchBySellersAxios(sellers);
     const limited = rows.slice(0, sellers.length * limit);
@@ -46,13 +53,24 @@ export async function POST(req: NextRequest) {
       meta: { sellers, maxPerSeller: limit, total: limited.length },
     });
   } catch (err: unknown) {
+    // axios error details if present
+    const anyErr = err as any;
+    const status = anyErr?.response?.status as number | undefined;
+    const statusText = anyErr?.response?.statusText as string | undefined;
+    const data = anyErr?.response?.data;
     const message = err instanceof Error ? err.message : String(err);
     console.error(
-      JSON.stringify({ level: "error", msg: "search error", error: message })
+      JSON.stringify({ level: "error", msg: "search error", status, statusText, data, error: message })
     );
     return NextResponse.json(
-      { error: "検索に失敗しました。後でもう一度お試しください。" },
-      { status: 500 }
+      {
+        error:
+          status && data
+            ? `eBay API エラー: ${status} ${statusText || ""}`
+            : "検索に失敗しました。後でもう一度お試しください。",
+        details: data || message,
+      },
+      { status: status && status >= 400 ? status : 500 }
     );
   }
 }

@@ -18,19 +18,32 @@ async function getAppToken() {
   if (!env.EBAY_CLIENT_ID || !env.EBAY_CLIENT_SECRET) {
     throw new Error(".env に EBAY_CLIENT_ID / EBAY_CLIENT_SECRET を設定してください。");
   }
-  const res = await axios.post(
-    `${BASE}/identity/v1/oauth2/token`,
-    new URLSearchParams({
-      grant_type: "client_credentials",
-      scope: "https://api.ebay.com/oauth/api_scope/buy.browse",
-    }),
-    {
-      auth: { username: env.EBAY_CLIENT_ID, password: env.EBAY_CLIENT_SECRET },
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      timeout: 20000,
+  // Try with buy.browse first; if invalid_scope, fall back to base scope
+  const form = (scope: string) =>
+    new URLSearchParams({ grant_type: "client_credentials", scope });
+  const cfg = {
+    auth: { username: env.EBAY_CLIENT_ID, password: env.EBAY_CLIENT_SECRET },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    timeout: 20000,
+  } as const;
+  try {
+    const res = await axios.post(
+      `${BASE}/identity/v1/oauth2/token`,
+      form("https://api.ebay.com/oauth/api_scope/buy.browse"),
+      cfg
+    );
+    return res.data.access_token as string;
+  } catch (e: any) {
+    if (e?.response?.data?.error === "invalid_scope") {
+      const res2 = await axios.post(
+        `${BASE}/identity/v1/oauth2/token`,
+        form("https://api.ebay.com/oauth/api_scope"),
+        cfg
+      );
+      return res2.data.access_token as string;
     }
-  );
-  return res.data.access_token as string;
+    throw e;
+  }
 }
 
 async function fetchAllActiveListingsBySellers(token: string, sellers: string[]): Promise<SampleItem[]> {
