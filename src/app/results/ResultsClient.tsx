@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 
 type Item = {
@@ -15,13 +14,9 @@ type Item = {
   listedAt?: string | null;
 };
 
-export default function ResultsClient() {
-  const sp = useSearchParams();
-  const sellers = useMemo(
-    () => (sp.get("sellers") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
-    [sp]
-  );
-  const maxPerSeller = Number(sp.get("maxPerSeller") ?? "50");
+export default function ResultsClient({ initialSellers, initialMaxPerSeller }: { initialSellers: string[]; initialMaxPerSeller: number }) {
+  const sellers = initialSellers;
+  const maxPerSeller = initialMaxPerSeller;
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
