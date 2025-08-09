@@ -24,3 +24,105 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Cyber Aurora background */
+.liquid-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  /* brighter, fewer-color gradient */
+  background:
+    radial-gradient(50% 40% at 20% 20%, rgba(147, 197, 253, 0.45), transparent 60%),
+    radial-gradient(45% 35% at 80% 30%, rgba(191, 219, 254, 0.40), transparent 60%),
+    linear-gradient(180deg, rgba(219, 234, 254, 0.75), rgba(224, 242, 254, 0.75));
+  filter: blur(24px) saturate(115%);
+  transform: translateZ(0);
+  animation: liquidMove 18s ease-in-out infinite alternate;
+}
+
+
+/* simplify overlays for cleaner look */
+.liquid-bg::before { content: none; }
+
+.liquid-bg::after { content: none; }
+
+@keyframes liquidMove {
+  0% {
+    filter: blur(32px) saturate(115%);
+    transform: translate3d(0, 0, 0) scale(1.0);
+  }
+  50% {
+    filter: blur(38px) saturate(125%);
+    transform: translate3d(0, -1.5%, 0) scale(1.02);
+  }
+  100% {
+    filter: blur(34px) saturate(120%);
+    transform: translate3d(0, 1.5%, 0) scale(1.01);
+  }
+}
+
+/* remove extra sweep for minimal palette */
+
+/* Glass card */
+.glass {
+  background: color-mix(in oklab, var(--background) 70%, transparent 30%);
+  border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent 88%);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+
+/* Aurora glass panel (unified) */
+.aurora-panel {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04)),
+    color-mix(in oklab, var(--background) 36%, transparent 64%);
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow:
+    0 0 24px rgba(255,255,255,0.18),
+    0 14px 40px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+
+/* Premium glass inputs */
+.input-glass {
+  background: color-mix(in oklab, #ffffff 10%, transparent 90%);
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow:
+    0 0 12px rgba(255,255,255,0.15),
+    inset 0 0 0 9999px rgba(255,255,255,0.02);
+}
+
+/* Hero heading visibility */
+.heading-hero {
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  text-shadow:
+    0 2px 10px rgba(59, 130, 246, 0.28),
+    0 1px 0 rgba(255,255,255,0.80);
+}
+
+/* Primary button */
+.btn-primary {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 40%, #0ea5e9 100%);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow:
+    0 8px 20px rgba(29, 78, 216, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.btn-primary:hover {
+  filter: brightness(1.05) saturate(1.05);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+}
+
+/* Gradient accent text (blue) */
+.accent-text {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 40%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
