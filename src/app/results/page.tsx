@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import ResultsClient from "./ResultsClient";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+export const runtime = "nodejs";
 
 function ReadParams() {
   const url = typeof window !== "undefined" ? new URL(window.location.href) : undefined;
