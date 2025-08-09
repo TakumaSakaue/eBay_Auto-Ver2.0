@@ -55,7 +55,8 @@ async function fetchAllActiveListingsBySellers(token: string, sellers: string[])
 
   while (true) {
     const res = await axios.get(`${BASE}/buy/browse/v1/item_summary/search`, {
-      params: { filter, limit: LIMIT, offset },
+      // Browse APIは q/epid/gtin などの主クエリが必須。セラー抽出のみの場合は q="*" を指定する
+      params: { q: "*", filter, limit: LIMIT, offset },
       headers: {
         Authorization: `Bearer ${token}`,
         "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE,
