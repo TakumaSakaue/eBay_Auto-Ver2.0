@@ -22,7 +22,7 @@ async function getAppToken() {
     `${BASE}/identity/v1/oauth2/token`,
     new URLSearchParams({
       grant_type: "client_credentials",
-      scope: "https://api.ebay.com/oauth/api_scope",
+      scope: "https://api.ebay.com/oauth/api_scope/buy.browse",
     }),
     {
       auth: { username: env.EBAY_CLIENT_ID, password: env.EBAY_CLIENT_SECRET },
