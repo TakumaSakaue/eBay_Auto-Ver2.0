@@ -60,16 +60,29 @@ export async function POST(req: NextRequest) {
     const statusText = ax.response?.statusText;
     const data = ax.response?.data;
     const message = err instanceof Error ? err.message : String(err);
-    console.error(
-      JSON.stringify({ level: "error", msg: "search error", status, statusText, data, error: message })
-    );
+    // JSON.stringifyが失敗するのを防ぐ
+    let safeLogData: unknown = data;
+    try {
+      // 循環参照を排除
+      safeLogData = data ? JSON.parse(JSON.stringify(data)) : data;
+    } catch {
+      safeLogData = "[unserializable response.data]";
+    }
+    const safeDetails = typeof data === "string" ? data : safeLogData ?? message;
+    try {
+      console.error(
+        JSON.stringify({ level: "error", msg: "search error", status, statusText, data: safeLogData, error: message })
+      );
+    } catch {
+      console.error({ level: "error", msg: "search error", status, statusText, error: message });
+    }
     return NextResponse.json(
       {
         error:
           status && data
             ? `eBay API エラー: ${status} ${statusText || ""}`
             : "検索に失敗しました。後でもう一度お試しください。",
-        details: data || message,
+        details: safeDetails,
       },
       { status: status && status >= 400 ? status : 500 }
     );

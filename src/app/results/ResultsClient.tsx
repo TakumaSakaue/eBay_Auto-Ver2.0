@@ -97,18 +97,18 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
         {!loading && !error && (
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-600">
-                <th className="px-2 py-2">商品名</th>
-                <th className="px-2 py-2">Watch数</th>
-                <th className="px-2 py-2">URL</th>
+              <tr className="text-gray-600">
+                <th className="px-2 py-2 text-center">商品名</th>
+                <th className="px-2 py-2 text-center">Watch数</th>
+                <th className="px-2 py-2 text-center">URL</th>
               </tr>
             </thead>
             <tbody>
               {items.map((it, idx) => (
                 <tr key={`${it.itemId}-${idx}`} className="odd:bg-white/40 even:bg-white/20">
-                  <td className="px-2 py-2 max-w-[520px]">{it.title ?? "-"}</td>
-                  <td className="px-2 py-2 whitespace-nowrap">{it.watchCount ?? "-"}</td>
-                  <td className="px-2 py-2 max-w-[280px] truncate">
+                  <td className="px-2 py-2 max-w-[520px] text-center">{it.title ?? "-"}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-center">{it.watchCount ?? "-"}</td>
+                  <td className="px-2 py-2 max-w-[280px] truncate text-center">
                     {it.url ? (
                       <a className="text-blue-700 underline" href={it.url} target="_blank" rel="noreferrer">
                         Link

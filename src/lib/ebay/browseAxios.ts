@@ -1,4 +1,5 @@
 import axios from "axios";
+import pLimit from "p-limit";
 import { env } from "@/lib/env";
 
 const BASE = env.EBAY_ENV === "sandbox" ? "https://api.sandbox.ebay.com" : "https://api.ebay.com";
@@ -190,7 +191,50 @@ export async function searchBySellersAxios(sellers: string[], maxPerSeller: numb
     }
   }
   const flat = results;
-  return sortForDisplay(normalize(flat));
+  const normalized = normalize(flat);
+  const enriched = await enrichWatchCounts(normalized);
+  return sortForDisplay(enriched);
+}
+
+async function fetchWatchCountFromPage(url: string): Promise<number | null> {
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+      },
+      timeout: 15000,
+      maxRedirects: 5,
+    });
+    const html: string = res.data as string;
+    const patterns = [
+      /([0-9,]+)\s*watchers/i,
+      /([0-9,]+)\s*人がこの商品をウォッチ中です。?/,
+    ];
+    for (const re of patterns) {
+      const m = html.match(re);
+      if (m && m[1]) {
+        const n = parseInt(m[1].replace(/,/g, ""), 10);
+        if (!Number.isNaN(n)) return n;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function enrichWatchCounts(rows: NormalizedRow[]): Promise<NormalizedRow[]> {
+  const limit = pLimit(3);
+  const tasks = rows.map((r) =>
+    limit(async () => {
+      if (!r.url) return r;
+      const wc = await fetchWatchCountFromPage(r.url);
+      return { ...r, watchCount: wc ?? r.watchCount };
+    })
+  );
+  return Promise.all(tasks);
 }
 
 
