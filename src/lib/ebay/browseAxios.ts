@@ -11,7 +11,7 @@ export type SampleItem = {
   itemWebUrl?: string;
   seller?: { username?: string };
   itemCreationDate?: string;
-  watchCount?: number;
+  watchCount?: number; // Browse APIでは通常返らないため null になる想定
 };
 
 async function getAppToken() {
@@ -141,11 +141,11 @@ async function fetchSellerListings(token: string, seller: string, maxPerSeller: 
 export type NormalizedRow = {
   itemId: string | null;
   title: string | null;
-  priceValue: string | null;
-  priceCurrency: string | null;
+  priceValue: string | null; // 未使用
+  priceCurrency: string | null; // 未使用
   url: string | null;
-  seller: string | null;
-  itemCreationDate: string | null;
+  seller: string | null; // 未使用
+  itemCreationDate: string | null; // 未使用
   watchCount: number | null;
 };
 

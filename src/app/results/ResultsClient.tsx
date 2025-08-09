@@ -8,8 +8,8 @@ type Item = {
   sellerId: string | null;
   itemId: string | null;
   title: string | null;
-  priceValue: number | null;
-  priceCurrency: string | null;
+  priceValue: number | null; // 使わないが型は保持
+  priceCurrency: string | null; // 使わないが型は保持
   watchCount: number | null;
   url: string | null;
   listedAt?: string | null;
@@ -44,23 +44,11 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
   }, [sellers, maxPerSeller]);
 
   function exportCSV() {
-    const header = [
-      "sellerId",
-      "itemId",
-      "title",
-      "priceValue",
-      "priceCurrency",
-      "url",
-      "listedAt",
-    ];
+    const header = ["title", "watchCount", "url"]; // 商品名, Watch数, URL
     const rows = items.map((it) => [
-      it.sellerId ?? "",
-      it.itemId ?? "",
       it.title ?? "",
-      it.priceValue ?? "",
-      it.priceCurrency ?? "",
+      it.watchCount ?? "",
       it.url ?? "",
-      it.listedAt ?? "",
     ]);
     const csv = [header, ...rows]
       .map((r) =>
@@ -110,22 +98,16 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="text-left text-gray-600">
-                <th className="px-2 py-2">Title</th>
-                <th className="px-2 py-2">Price</th>
+                <th className="px-2 py-2">商品名</th>
+                <th className="px-2 py-2">Watch数</th>
                 <th className="px-2 py-2">URL</th>
-                <th className="px-2 py-2">Seller</th>
-                <th className="px-2 py-2">Listing Date</th>
               </tr>
             </thead>
             <tbody>
               {items.map((it, idx) => (
                 <tr key={`${it.itemId}-${idx}`} className="odd:bg-white/40 even:bg-white/20">
                   <td className="px-2 py-2 max-w-[520px]">{it.title ?? "-"}</td>
-                  <td className="px-2 py-2 text-right whitespace-nowrap">
-                    {it.priceValue != null && it.priceCurrency
-                      ? `${it.priceValue} ${it.priceCurrency}`
-                      : "-"}
-                  </td>
+                  <td className="px-2 py-2 whitespace-nowrap">{it.watchCount ?? "-"}</td>
                   <td className="px-2 py-2 max-w-[280px] truncate">
                     {it.url ? (
                       <a className="text-blue-700 underline" href={it.url} target="_blank" rel="noreferrer">
@@ -135,13 +117,11 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
                       "-"
                     )}
                   </td>
-                  <td className="px-2 py-2">{it.sellerId ?? "-"}</td>
-                  <td className="px-2 py-2">{it.listedAt ?? "-"}</td>
                 </tr>
               ))}
               {items.length === 0 && !loading && !error && (
                 <tr>
-                  <td className="px-2 py-6 text-center text-gray-600" colSpan={5}>該当する出品は見つかりませんでした。</td>
+                  <td className="px-2 py-6 text-center text-gray-600" colSpan={3}>該当する出品は見つかりませんでした。</td>
                 </tr>
               )}
             </tbody>
