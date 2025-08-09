@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
 
@@ -15,7 +15,9 @@ type Item = {
   listedAt?: string | null;
 };
 
-export default function ResultsPage() {
+export const dynamic = "force-dynamic";
+
+function ResultsContent() {
   const sp = useSearchParams();
   const sellers = useMemo(() => (sp.get("sellers") ?? "").split(",").map(s => s.trim()).filter(Boolean), [sp]);
   const maxPerSeller = Number(sp.get("maxPerSeller") ?? "50");
@@ -144,6 +146,14 @@ export default function ResultsPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen px-6 py-10 max-w-7xl mx-auto"><p>読み込み中...</p></div>}>
+      <ResultsContent />
+    </Suspense>
   );
 }
 
