@@ -4,20 +4,24 @@
    - Environments: .env
 
  ✓ Starting...
- ✓ Ready in 899ms
- ○ Compiling /api/search ...
- ✓ Compiled /api/search in 916ms
- POST /api/search 200 in 4379ms
+ ✓ Ready in 908ms
  ○ Compiling / ...
- ✓ Compiled / in 1311ms
- GET / 200 in 1497ms
- ✓ Compiled /favicon.ico in 404ms
- GET /favicon.ico?favicon.45db1c09.ico 200 in 662ms
- POST /api/search 200 in 4078ms
- ✓ Compiled /results in 319ms
- GET /results?sellers=https%3A%2F%2Fwww.ebay.com%2Fstr%2Faskmejapan%3F_trksid%3Dp4429486.m3561.l161211&maxPerSeller=50 200 in 349ms
- POST /api/search 200 in 3821ms
- POST /api/search 200 in 4093ms
+ ✓ Compiled / in 1597ms
+ GET / 200 in 1793ms
+ GET / 200 in 57ms
+ ✓ Compiled /favicon.ico in 198ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 464ms
+ ✓ Compiled /api/search in 396ms
+ POST /api/search 200 in 5582ms
+ ✓ Compiled /results in 331ms
+ GET /results?sellers=https%3A%2F%2Fwww.ebay.com%2Fstr%2Faskmejapan%3F_trksid%3Dp4429486.m3561.l161211&maxPerSeller=50 200 in 364ms
+ POST /api/search 200 in 4804ms
+ POST /api/search 200 in 4891ms
+ GET / 200 in 310ms
+ POST /api/search 200 in 10075ms
+ GET /results?sellers=https%3A%2F%2Fwww.ebay.com%2Fstr%2Fbaysidethrift%3Fpromoted_items%3D297487872546%252C297174540182%252C296622180753%26_sacat%3D183454%26_trkparms%3Dparentrq%253A8f841a201980a2c6d6410613fff34094%257Cpageci%253A2bc9f7b4-7538-11f0-a113-be8107e86a06%257Ciid%253A8%257Cvlpname%253Avlp_homepage&maxPerSeller=10 200 in 50ms
+ POST /api/search 200 in 14185ms
+ POST /api/search 200 in 14313ms
  ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/server/app/page/app-build-manifest.json'] {
   errno: -2,
   code: 'ENOENT',
@@ -25,12 +29,12 @@
   path: '/Users/takuma/Downloads/eBay_Auto/.next/server/app/page/app-build-manifest.json'
 }
  ○ Compiling /_error ...
- ✓ Compiled /_error in 943ms
- ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.5x21evm5an7'] {
+ ✓ Compiled /_error in 927ms
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.y6a28bnbdk'] {
   errno: -2,
   code: 'ENOENT',
   syscall: 'open',
-  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.5x21evm5an7'
+  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.y6a28bnbdk'
 }
 [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/server/app/page/app-build-manifest.json'] {
   errno: -2,
@@ -38,17 +42,17 @@
   syscall: 'open',
   path: '/Users/takuma/Downloads/eBay_Auto/.next/server/app/page/app-build-manifest.json'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.77o9080omcu'] {
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.oh8rbtfqbxd'] {
   errno: -2,
   code: 'ENOENT',
   syscall: 'open',
-  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.77o9080omcu'
+  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.oh8rbtfqbxd'
 }
-[Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.w2k4rt2w2tr'] {
+[Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.wjcksl9jf9'] {
   errno: -2,
   code: 'ENOENT',
   syscall: 'open',
-  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.w2k4rt2w2tr'
+  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.wjcksl9jf9'
 }
  ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/server/app/page/app-build-manifest.json'] {
   errno: -2,
@@ -56,11 +60,11 @@
   syscall: 'open',
   path: '/Users/takuma/Downloads/eBay_Auto/.next/server/app/page/app-build-manifest.json'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.7v59av5z5na'] {
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.b61u18jbhh'] {
   errno: -2,
   code: 'ENOENT',
   syscall: 'open',
-  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.7v59av5z5na'
+  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.b61u18jbhh'
 }
 [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/server/app/page/app-build-manifest.json'] {
   errno: -2,
@@ -68,17 +72,17 @@
   syscall: 'open',
   path: '/Users/takuma/Downloads/eBay_Auto/.next/server/app/page/app-build-manifest.json'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.jpgielmjfug'] {
+ ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.pevykxwfw1d'] {
   errno: -2,
   code: 'ENOENT',
   syscall: 'open',
-  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.jpgielmjfug'
+  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.pevykxwfw1d'
 }
-[Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.bzpc3s5cran'] {
+[Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.6ohi4vyq9ql'] {
   errno: -2,
   code: 'ENOENT',
   syscall: 'open',
-  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.bzpc3s5cran'
+  path: '/Users/takuma/Downloads/eBay_Auto/.next/static/development/_buildManifest.js.tmp.6ohi4vyq9ql'
 }
  ⨯ [Error: ENOENT: no such file or directory, open '/Users/takuma/Downloads/eBay_Auto/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'] {
   errno: -2,
@@ -86,3 +90,4 @@
   syscall: 'open',
   path: '/Users/takuma/Downloads/eBay_Auto/.next/server/app/favicon.ico/[__metadata_id__]/route/app-paths-manifest.json'
 }
+ ✓ Compiled in 39ms

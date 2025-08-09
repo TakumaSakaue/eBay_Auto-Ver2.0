@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [sellersInput, setSellersInput] = useState("");
-  const [maxPerSeller, setMaxPerSeller] = useState<number>(50);
+  const [maxPerSeller, setMaxPerSeller] = useState<number>(10);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();

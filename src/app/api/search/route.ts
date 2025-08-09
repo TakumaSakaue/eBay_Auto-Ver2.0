@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { searchBySellersAxios } from "@/lib/ebay/browseAxios";
@@ -35,6 +36,8 @@ function normalizeSellerToken(token: string): string | null {
     if (usrIdx !== -1 && segments[usrIdx + 1]) return decodeURIComponent(segments[usrIdx + 1]);
     const schIdx = segments.indexOf("sch");
     if (schIdx !== -1 && segments[schIdx + 1]) return decodeURIComponent(segments[schIdx + 1]);
+    // /str/<store-name> はストア名のため、ここでは未確定（後段のWeb解決で取得）
+    if (segments.includes("str")) return ""; // 解決保留
     if (segments.length > 0) return decodeURIComponent(segments[segments.length - 1]);
   } catch {
     return t;
@@ -42,13 +45,56 @@ function normalizeSellerToken(token: string): string | null {
   return null;
 }
 
+async function resolveSellerTokens(tokens: string[]): Promise<string[]> {
+  const resolved: string[] = [];
+  for (const raw of tokens) {
+    const base = normalizeSellerToken(raw);
+    if (base && base.length > 0) {
+      resolved.push(base);
+      continue;
+    }
+    // /str/ ストアURLなどでユーザー名未特定の場合はWebから取得
+    try {
+      if (/^https?:\/\/[^\s]+\/str\//i.test(raw)) {
+        const res = await axios.get(raw, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+          },
+          timeout: 15000,
+          maxRedirects: 5,
+        });
+        const html: string = res.data as string;
+        const mUsr = html.match(/\/usr\/([^\"'/?<\s]+)/);
+        const mSsn = html.match(/[?&]_ssn=([^&\"']+)/);
+        const user = mUsr?.[1] || mSsn?.[1];
+        if (user) {
+          resolved.push(decodeURIComponent(user));
+          continue;
+        }
+      }
+    } catch {
+      // ignore and fallback to last segment
+    }
+    // 最後の手段として末尾セグメント
+    try {
+      const u = new URL(raw);
+      const seg = u.pathname.split("/").filter(Boolean).pop();
+      if (seg) resolved.push(decodeURIComponent(seg));
+    } catch {
+      // そのまま追加
+      resolved.push(raw.trim());
+    }
+  }
+  return resolved;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const json = await req.json();
     const { sellers, maxPerSeller } = BodySchema.parse(json);
-    const normalized = sellers
-      .map(normalizeSellerToken)
-      .filter((v): v is string => Boolean(v));
+    const normalized = (await resolveSellerTokens(sellers)).filter(Boolean);
     if (normalized.length === 0) {
       return NextResponse.json({ error: "有効なセラー入力がありません。URL もしくはユーザー名を指定してください。" }, { status: 400 });
     }
