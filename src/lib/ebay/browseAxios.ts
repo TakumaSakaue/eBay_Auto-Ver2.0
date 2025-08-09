@@ -53,11 +53,10 @@ async function fetchSellerListings(token: string, seller: string, maxPerSeller: 
   const quoteSeller = (u: string) => JSON.stringify(u); // ensure spaces/specials are quoted
   const baseFilter = `sellers:{${quoteSeller(seller)}}`;
 
-  async function searchOnce(params: { offset: number; limit: number; price?: [number, number] }) {
-    const { offset, limit, price } = params;
+  async function searchOnce(params: { offset: number; limit: number; price?: [number, number]; useLocation?: boolean }) {
+    const { offset, limit, price, useLocation } = params;
     const filterParts = [baseFilter];
-    // JP相当の代理条件: itemLocationCountryをJPにする（US市場APIでの近似）
-    if (env.EBAY_ITEM_LOCATION_COUNTRY) {
+    if (useLocation && env.EBAY_ITEM_LOCATION_COUNTRY) {
       filterParts.push(`itemLocationCountry:${env.EBAY_ITEM_LOCATION_COUNTRY}`);
     }
     if (price) filterParts.push(`price:[${price[0]}..${price[1]}]`);
@@ -75,7 +74,7 @@ async function fetchSellerListings(token: string, seller: string, maxPerSeller: 
     while (acc.length < maxPerSeller) {
       const limit = Math.min(PAGE_LIMIT, maxPerSeller - acc.length);
       try {
-        const res = await searchOnce({ offset, limit });
+        const res = await searchOnce({ offset, limit, useLocation: true });
         const items: SampleItem[] = res.data.itemSummaries || [];
         acc.push(...items);
         const total: number = res.data.total || 0;
@@ -112,7 +111,7 @@ async function fetchSellerListings(token: string, seller: string, maxPerSeller: 
       while (acc.length < maxPerSeller) {
         const limit = Math.min(PAGE_LIMIT, maxPerSeller - acc.length);
         try {
-          const res = await searchOnce({ offset, limit, price: band });
+          const res = await searchOnce({ offset, limit, price: band, useLocation: true });
           const items: SampleItem[] = res.data.itemSummaries || [];
           acc.push(...items);
           const total: number = res.data.total || 0;
@@ -132,10 +131,28 @@ async function fetchSellerListings(token: string, seller: string, maxPerSeller: 
   }
 
   try {
-    return await tryLinear();
+    const first = await tryLinear();
+    if (first.length > 0) return first;
+    // 位置フィルタで0件の場合は、位置フィルタ無しで再試行
+    const acc: SampleItem[] = [];
+    let offset = 0;
+    while (acc.length < maxPerSeller) {
+      const limit = Math.min(PAGE_LIMIT, maxPerSeller - acc.length);
+      const res = await searchOnce({ offset, limit, useLocation: false });
+      const items: SampleItem[] = res.data.itemSummaries || [];
+      acc.push(...items);
+      const total: number = res.data.total || 0;
+      offset += items.length;
+      if (items.length === 0 || offset >= total) break;
+    }
+    return acc;
   } catch {
     // Fallback to banded search if linear triggers 12023
-    return await tryPriceBands();
+    const banded = await tryPriceBands();
+    if (banded.length > 0) return banded;
+    // APIから取れない場合はWeb検索フォールバック
+    const webRows = await fallbackSearchByWeb(token, seller, maxPerSeller);
+    return webRows;
   }
 }
 
@@ -235,6 +252,68 @@ async function enrichWatchCounts(rows: NormalizedRow[]): Promise<NormalizedRow[]
     })
   );
   return Promise.all(tasks);
+}
+
+async function searchWebForLegacyIds(username: string, desired: number): Promise<number[]> {
+  try {
+    const res = await axios.get("https://www.ebay.com/sch/i.html", {
+      params: { _ssn: username, _sop: 10, _ipg: 200 },
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+      },
+      timeout: 15000,
+      maxRedirects: 5,
+    });
+    const html: string = res.data as string;
+    const ids = new Set<number>();
+    const patterns: RegExp[] = [
+      /\/itm\/(\d+)[\/\?]/g, // /itm/123456789012/
+      /item=(\d+)/g, // ...&item=123456789012
+    ];
+    for (const re of patterns) {
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(html))) {
+        const id = parseInt(m[1], 10);
+        if (!Number.isNaN(id)) {
+          ids.add(id);
+          if (ids.size >= desired) break;
+        }
+      }
+      if (ids.size >= desired) break;
+    }
+    return Array.from(ids).slice(0, desired);
+  } catch {
+    return [];
+  }
+}
+
+async function fetchItemsByLegacyIds(token: string, ids: number[]): Promise<SampleItem[]> {
+  const limit = pLimit(3);
+  const tasks = ids.map((id) =>
+    limit(async () => {
+      try {
+        const res = await axios.get(`${BASE}/buy/browse/v1/item/get_item_by_legacy_id`, {
+          params: { legacy_item_id: String(id) },
+          headers: { Authorization: `Bearer ${token}`, "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE },
+          timeout: 20000,
+        });
+        return res.data as SampleItem;
+      } catch {
+        return null;
+      }
+    })
+  );
+  const results = await Promise.all(tasks);
+  return results.filter((r): r is SampleItem => Boolean(r));
+}
+
+async function fallbackSearchByWeb(token: string, seller: string, maxPerSeller: number): Promise<SampleItem[]> {
+  const ids = await searchWebForLegacyIds(seller, maxPerSeller);
+  if (ids.length === 0) return [];
+  const items = await fetchItemsByLegacyIds(token, ids);
+  return items.slice(0, maxPerSeller);
 }
 
 
