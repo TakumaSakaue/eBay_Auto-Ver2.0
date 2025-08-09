@@ -8,6 +8,7 @@ const EnvSchema = z.object({
     .default("production"),
   EBAY_MARKETPLACE_ID: z.string().min(1).default("EBAY_US"),
   EBAY_MARKETPLACE: z.string().optional(),
+  EBAY_ITEM_LOCATION_COUNTRY: z.string().optional(),
   MAX_RESULTS_PER_SELLER: z.coerce.number().int().positive().default(50),
   CONCURRENCY: z.coerce.number().int().positive().default(3),
   CACHE_TTL_MS: z.coerce.number().int().positive().default(900000),
@@ -21,6 +22,7 @@ export const env = EnvSchema.parse({
   MAX_RESULTS_PER_SELLER: process.env.MAX_RESULTS_PER_SELLER ?? "50",
   CONCURRENCY: process.env.CONCURRENCY ?? "3",
   CACHE_TTL_MS: process.env.CACHE_TTL_MS ?? "900000",
+  EBAY_ITEM_LOCATION_COUNTRY: process.env.EBAY_ITEM_LOCATION_COUNTRY,
 });
 
 export type Env = typeof env;

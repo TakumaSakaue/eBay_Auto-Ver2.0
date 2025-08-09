@@ -3,16 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Item = {
-  sellerId: string | null;
-  itemId: string | null;
-  title: string | null;
-  priceValue: number | null;
-  priceCurrency: string | null;
-  watchCount: number | null;
-  url: string | null;
-  listedAt?: string | null;
-};
+// remove unused Item type to satisfy lint
 
 export default function Home() {
   const [sellersInput, setSellersInput] = useState("");
@@ -43,7 +34,7 @@ export default function Home() {
         const txt = await res.text();
         throw new Error(txt || "検索に失敗しました");
       }
-      const data = await res.json();
+      await res.json();
       const params = new URLSearchParams();
       params.set("sellers", sellersArray.join(","));
       params.set("maxPerSeller", String(maxPerSeller));

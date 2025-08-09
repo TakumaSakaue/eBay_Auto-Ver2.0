@@ -33,8 +33,9 @@ async function getAppToken() {
       cfg
     );
     return res.data.access_token as string;
-  } catch (e: any) {
-    if (e?.response?.data?.error === "invalid_scope") {
+  } catch (e: unknown) {
+    const ax = e as { response?: { data?: { error?: string } } };
+    if (ax.response?.data?.error === "invalid_scope") {
       const res2 = await axios.post(
         `${BASE}/identity/v1/oauth2/token`,
         form("https://api.ebay.com/oauth/api_scope"),
@@ -46,31 +47,95 @@ async function getAppToken() {
   }
 }
 
-async function fetchAllActiveListingsBySellers(token: string, sellers: string[]): Promise<SampleItem[]> {
-  const joined = sellers.join("|");
-  const filter = `sellers:{${joined}}`;
-  const all: SampleItem[] = [];
-  const LIMIT = 200;
-  let offset = 0;
+async function fetchSellerListings(token: string, seller: string, maxPerSeller: number): Promise<SampleItem[]> {
+  const PAGE_LIMIT = 200;
+  const quoteSeller = (u: string) => JSON.stringify(u); // ensure spaces/specials are quoted
+  const baseFilter = `sellers:{${quoteSeller(seller)}}`;
 
-  while (true) {
-    const res = await axios.get(`${BASE}/buy/browse/v1/item_summary/search`, {
-      // Browse APIは q/epid/gtin などの主クエリが必須。セラー抽出のみの場合は q="*" を指定する
-      params: { q: "*", filter, limit: LIMIT, offset },
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE,
-      },
+  async function searchOnce(params: { offset: number; limit: number; price?: [number, number] }) {
+    const { offset, limit, price } = params;
+    const filterParts = [baseFilter];
+    // JP相当の代理条件: itemLocationCountryをJPにする（US市場APIでの近似）
+    if (env.EBAY_ITEM_LOCATION_COUNTRY) {
+      filterParts.push(`itemLocationCountry:${env.EBAY_ITEM_LOCATION_COUNTRY}`);
+    }
+    if (price) filterParts.push(`price:[${price[0]}..${price[1]}]`);
+    const filter = filterParts.join(",");
+    return axios.get(`${BASE}/buy/browse/v1/item_summary/search`, {
+      params: { q: "*", filter, limit, offset },
+      headers: { Authorization: `Bearer ${token}`, "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE },
       timeout: 30000,
     });
-
-    const items: SampleItem[] = res.data.itemSummaries || [];
-    all.push(...items);
-    const total: number = res.data.total || 0;
-    offset += items.length;
-    if (items.length === 0 || offset >= total) break;
   }
-  return all;
+
+  async function tryLinear(): Promise<SampleItem[]> {
+    const acc: SampleItem[] = [];
+    let offset = 0;
+    while (acc.length < maxPerSeller) {
+      const limit = Math.min(PAGE_LIMIT, maxPerSeller - acc.length);
+      try {
+        const res = await searchOnce({ offset, limit });
+        const items: SampleItem[] = res.data.itemSummaries || [];
+        acc.push(...items);
+        const total: number = res.data.total || 0;
+        offset += items.length;
+        if (items.length === 0 || offset >= total) break;
+      } catch (e: unknown) {
+        type ErrorResponse = { errors?: Array<{ errorId?: number }> };
+        const ax = e as { response?: { status?: number; data?: unknown } };
+        const id = (ax.response?.data as ErrorResponse | undefined)?.errors?.[0]?.errorId;
+        if (ax.response?.status === 400 && id === 12023) {
+          throw e; // escalate to banded search
+        }
+        throw e;
+      }
+    }
+    return acc;
+  }
+
+  async function tryPriceBands(): Promise<SampleItem[]> {
+    const bands: [number, number][] = [
+      [0, 20],
+      [20, 50],
+      [50, 100],
+      [100, 200],
+      [200, 500],
+      [500, 1000],
+      [1000, 5000],
+      [5000, 1000000],
+    ];
+    const acc: SampleItem[] = [];
+    for (const band of bands) {
+      if (acc.length >= maxPerSeller) break;
+      let offset = 0;
+      while (acc.length < maxPerSeller) {
+        const limit = Math.min(PAGE_LIMIT, maxPerSeller - acc.length);
+        try {
+          const res = await searchOnce({ offset, limit, price: band });
+          const items: SampleItem[] = res.data.itemSummaries || [];
+          acc.push(...items);
+          const total: number = res.data.total || 0;
+          offset += items.length;
+          if (items.length === 0 || offset >= total) break;
+        } catch (e: unknown) {
+          type ErrorResponse = { errors?: Array<{ errorId?: number }> };
+          const ax = e as { response?: { status?: number; data?: unknown } };
+          const id = (ax.response?.data as ErrorResponse | undefined)?.errors?.[0]?.errorId;
+          // if still too large, skip to next band
+          if (ax.response?.status === 400 && id === 12023) break;
+          throw e;
+        }
+      }
+    }
+    return acc;
+  }
+
+  try {
+    return await tryLinear();
+  } catch {
+    // Fallback to banded search if linear triggers 12023
+    return await tryPriceBands();
+  }
 }
 
 export type NormalizedRow = {
@@ -112,10 +177,20 @@ function sortForDisplay(rows: NormalizedRow[]): NormalizedRow[] {
   });
 }
 
-export async function searchBySellersAxios(sellers: string[]) {
+export async function searchBySellersAxios(sellers: string[], maxPerSeller: number) {
   const token = await getAppToken();
-  const raw = await fetchAllActiveListingsBySellers(token, sellers);
-  return sortForDisplay(normalize(raw));
+  const results: SampleItem[] = [];
+  for (const s of sellers) {
+    try {
+      const items = await fetchSellerListings(token, s, maxPerSeller);
+      results.push(...items);
+    } catch {
+      // ログのみ残して次のセラーへ
+      continue;
+    }
+  }
+  const flat = results;
+  return sortForDisplay(normalize(flat));
 }
 
 

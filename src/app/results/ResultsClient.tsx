@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+import Link from "next/link";
+// Excel出力は不要のため削除
 
 type Item = {
   sellerId: string | null;
@@ -49,7 +50,6 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
       "title",
       "priceValue",
       "priceCurrency",
-      "watchCount",
       "url",
       "listedAt",
     ];
@@ -59,7 +59,6 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
       it.title ?? "",
       it.priceValue ?? "",
       it.priceCurrency ?? "",
-      it.watchCount ?? "",
       it.url ?? "",
       it.listedAt ?? "",
     ]);
@@ -79,36 +78,17 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
     URL.revokeObjectURL(url);
   }
 
-  function exportXLSX() {
-    const rows = items.map((it) => ({
-      sellerId: it.sellerId ?? "",
-      itemId: it.itemId ?? "",
-      title: it.title ?? "",
-      priceValue: it.priceValue ?? "",
-      priceCurrency: it.priceCurrency ?? "",
-      watchCount: it.watchCount ?? "",
-      url: it.url ?? "",
-      listedAt: it.listedAt ?? "",
-    }));
-    const sheet = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, sheet, "Items");
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([wbout], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "ebay_seller_items.xlsx";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  // Excel出力は削除
 
   return (
     <div className="min-h-screen px-6 py-10 max-w-7xl mx-auto">
       <header className="mb-6 flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="inline-flex items-center justify-center w-9 h-9 rounded-full input-glass border hover:bg-white/40 transition" aria-label="Home">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-slate-700">
+              <path d="M11.47 3.84a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 1-1.06 1.06l-.9-.9V20.5a2 2 0 0 1-2 2h-3.25a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v4.5a.75.75 0 0 1-.75.75H4.5a2 2 0 0 1-2-2v-7.81l-.9.9a.75.75 0 1 1-1.06-1.06l8.69-8.69Z"/>
+            </svg>
+          </Link>
           <h2 className="text-2xl md:text-3xl font-semibold accent-text">検索結果</h2>
           <p className="text-xs text-gray-600 mt-1">セラー: {sellers.join(", ")}</p>
         </div>
@@ -119,13 +99,6 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
             className="rounded-lg border py-2 px-3 input-glass hover:bg-white/40 transition disabled:opacity-50"
           >
             CSV
-          </button>
-          <button
-            onClick={exportXLSX}
-            disabled={items.length === 0}
-            className="rounded-lg border py-2 px-3 input-glass hover:bg-white/40 transition disabled:opacity-50"
-          >
-            Excel
           </button>
         </div>
       </header>
@@ -139,7 +112,6 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
               <tr className="text-left text-gray-600">
                 <th className="px-2 py-2">Title</th>
                 <th className="px-2 py-2">Price</th>
-                <th className="px-2 py-2">WatchCount</th>
                 <th className="px-2 py-2">URL</th>
                 <th className="px-2 py-2">Seller</th>
                 <th className="px-2 py-2">Listing Date</th>
@@ -154,9 +126,6 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
                       ? `${it.priceValue} ${it.priceCurrency}`
                       : "-"}
                   </td>
-                  <td className="px-2 py-2 text-center">
-                    {typeof it.watchCount === "number" ? it.watchCount : "—"}
-                  </td>
                   <td className="px-2 py-2 max-w-[280px] truncate">
                     {it.url ? (
                       <a className="text-blue-700 underline" href={it.url} target="_blank" rel="noreferrer">
@@ -170,6 +139,11 @@ export default function ResultsClient({ initialSellers, initialMaxPerSeller }: {
                   <td className="px-2 py-2">{it.listedAt ?? "-"}</td>
                 </tr>
               ))}
+              {items.length === 0 && !loading && !error && (
+                <tr>
+                  <td className="px-2 py-6 text-center text-gray-600" colSpan={5}>該当する出品は見つかりませんでした。</td>
+                </tr>
+              )}
             </tbody>
           </table>
         )}

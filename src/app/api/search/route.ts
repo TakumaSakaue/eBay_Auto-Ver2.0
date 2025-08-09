@@ -17,7 +17,7 @@ const BodySchema = z.object({
         .filter(Boolean);
     })
     .pipe(z.array(z.string()).min(1, "At least one seller is required").max(100)),
-  maxPerSeller: z.number().int().positive().max(1000).optional(),
+  maxPerSeller: z.coerce.number().int().positive().max(1000).optional(),
 });
 
 export const dynamic = "force-dynamic";
@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Axios版で一括取得。limit制御は現状API側で200/ページのため、取得後slice
-    const rows = await searchBySellersAxios(sellers);
-    const limited = rows.slice(0, sellers.length * limit);
+    // セラーごとに個別検索して大規模レスポンス回避
+    const rows = await searchBySellersAxios(sellers, limit);
+    const limited = rows;
 
     return NextResponse.json({
       items: limited.map((r) => ({
@@ -54,10 +54,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     // axios error details if present
-    const anyErr = err as any;
-    const status = anyErr?.response?.status as number | undefined;
-    const statusText = anyErr?.response?.statusText as string | undefined;
-    const data = anyErr?.response?.data;
+    type AxiosLike = { response?: { status?: number; statusText?: string; data?: unknown } };
+    const ax = err as AxiosLike;
+    const status = ax.response?.status;
+    const statusText = ax.response?.statusText;
+    const data = ax.response?.data;
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       JSON.stringify({ level: "error", msg: "search error", status, statusText, data, error: message })
