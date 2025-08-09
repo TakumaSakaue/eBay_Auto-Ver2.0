@@ -59,10 +59,10 @@ export default function Home() {
       <section className="aurora-panel rounded-2xl p-5 md:p-7 border shadow-lg">
         <div className="grid md:grid-cols-[1fr_260px] gap-4 items-start">
           <div>
-            <label className="block text-sm font-medium mb-2">セラーID（カンマ/改行区切り, 最大100件）</label>
+            <label className="block text-sm font-medium mb-2">セラーのページリンク または セラーID（カンマ/改行区切り, 最大100件）</label>
             <textarea
               className="w-full rounded-xl p-3 border input-glass placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300/60"
-              placeholder="seller1, seller2\nまたは改行で入力"
+              placeholder="https://www.ebay.com/usr/USERNAME\nhttps://www.ebay.com/sch/USERNAME/m.html?_nkw=...\nまたは USERNAME をそのまま入力"
               value={sellersInput}
               onChange={(e) => setSellersInput(e.target.value)}
             />

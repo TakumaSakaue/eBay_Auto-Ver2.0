@@ -4,14 +4,21 @@
    - Environments: .env
 
  ✓ Starting...
- ✓ Ready in 1514ms
+ ✓ Ready in 1007ms
  ○ Compiling /api/search ...
- ✓ Compiled /api/search in 1645ms
- POST /api/search 200 in 6574ms
+ ✓ Compiled /api/search in 992ms
+ POST /api/search 200 in 4552ms
  ○ Compiling /results ...
- ✓ Compiled /results in 1674ms
- GET /results?sellers=tcgkitten&maxPerSeller=50 200 in 1904ms
- ✓ Compiled /favicon.ico in 167ms
- GET /favicon.ico?favicon.45db1c09.ico 200 in 420ms
- POST /api/search 200 in 3538ms
- ✓ Compiled in 107ms
+ ✓ Compiled /results in 2.4s
+ GET /results?sellers=tcgkitten&maxPerSeller=50 200 in 2625ms
+ ✓ Compiled /favicon.ico in 314ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 552ms
+ POST /api/search 200 in 3451ms
+ ○ Compiling / ...
+ ✓ Compiled / in 726ms
+ GET / 200 in 771ms
+ POST /api/search 200 in 3591ms
+ GET /results?sellers=https%3A%2F%2Fwww.ebay.com%2Fstr%2Faskmejapan%3F_trksid%3Dp4429486.m3561.l161211&maxPerSeller=50 200 in 107ms
+ POST /api/search 200 in 3456ms
+ POST /api/search 200 in 4189ms
+ ✓ Compiled in 365ms

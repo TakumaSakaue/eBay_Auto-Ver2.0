@@ -22,10 +22,36 @@ const BodySchema = z.object({
 
 export const dynamic = "force-dynamic";
 
+function normalizeSellerToken(token: string): string | null {
+  const t = token.trim();
+  if (!t) return null;
+  if (!/^https?:\/\//i.test(t)) return t;
+  try {
+    const u = new URL(t);
+    const ssn = u.searchParams.get("_ssn");
+    if (ssn) return ssn.trim();
+    const segments = u.pathname.split("/").filter(Boolean);
+    const usrIdx = segments.indexOf("usr");
+    if (usrIdx !== -1 && segments[usrIdx + 1]) return decodeURIComponent(segments[usrIdx + 1]);
+    const schIdx = segments.indexOf("sch");
+    if (schIdx !== -1 && segments[schIdx + 1]) return decodeURIComponent(segments[schIdx + 1]);
+    if (segments.length > 0) return decodeURIComponent(segments[segments.length - 1]);
+  } catch {
+    return t;
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const json = await req.json();
     const { sellers, maxPerSeller } = BodySchema.parse(json);
+    const normalized = sellers
+      .map(normalizeSellerToken)
+      .filter((v): v is string => Boolean(v));
+    if (normalized.length === 0) {
+      return NextResponse.json({ error: "有効なセラー入力がありません。URL もしくはユーザー名を指定してください。" }, { status: 400 });
+    }
     const limit = Math.min(maxPerSeller ?? env.MAX_RESULTS_PER_SELLER, 1000);
 
     if (!env.EBAY_CLIENT_ID || !env.EBAY_CLIENT_SECRET) {
@@ -36,7 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     // セラーごとに個別検索して大規模レスポンス回避
-    const rows = await searchBySellersAxios(sellers, limit);
+    const rows = await searchBySellersAxios(normalized, limit);
     const limited = rows;
 
     return NextResponse.json({
@@ -50,9 +76,16 @@ export async function POST(req: NextRequest) {
         url: r.url,
         listedAt: r.itemCreationDate,
       })),
-      meta: { sellers, maxPerSeller: limit, total: limited.length },
+      meta: { sellers: normalized, maxPerSeller: limit, total: limited.length },
     });
   } catch (err: unknown) {
+    // Zod バリデーションエラーは 400 を返す
+    if (err instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: err.issues },
+        { status: 400 }
+      );
+    }
     // axios error details if present
     type AxiosLike = { response?: { status?: number; statusText?: string; data?: unknown } };
     const ax = err as AxiosLike;
