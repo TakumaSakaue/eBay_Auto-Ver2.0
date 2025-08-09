@@ -7,6 +7,7 @@ const EnvSchema = z.object({
     .enum(["production", "sandbox"]) 
     .default("production"),
   EBAY_MARKETPLACE_ID: z.string().min(1).default("EBAY_US"),
+  EBAY_MARKETPLACE: z.string().optional(),
   MAX_RESULTS_PER_SELLER: z.coerce.number().int().positive().default(50),
   CONCURRENCY: z.coerce.number().int().positive().default(3),
   CACHE_TTL_MS: z.coerce.number().int().positive().default(900000),

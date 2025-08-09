@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { env } from "@/lib/env";
-import { fetchSellersListings, sortItemsWithFallback } from "@/lib/ebay/browse";
+import { searchBySellersAxios } from "@/lib/ebay/browseAxios";
 
 const BodySchema = z.object({
   sellers: z
@@ -28,12 +28,22 @@ export async function POST(req: NextRequest) {
     const { sellers, maxPerSeller } = BodySchema.parse(json);
     const limit = Math.min(maxPerSeller ?? env.MAX_RESULTS_PER_SELLER, 1000);
 
-    const items = await fetchSellersListings(sellers, limit);
-    const sorted = sortItemsWithFallback(items);
+    // Axios版で一括取得。limit制御は現状API側で200/ページのため、取得後slice
+    const rows = await searchBySellersAxios(sellers);
+    const limited = rows.slice(0, sellers.length * limit);
 
     return NextResponse.json({
-      items: sorted,
-      meta: { sellers, maxPerSeller: limit, total: sorted.length },
+      items: limited.map((r) => ({
+        sellerId: r.seller,
+        itemId: r.itemId,
+        title: r.title,
+        priceValue: r.priceValue ? Number(r.priceValue) : null,
+        priceCurrency: r.priceCurrency,
+        watchCount: r.watchCount,
+        url: r.url,
+        listedAt: r.itemCreationDate,
+      })),
+      meta: { sellers, maxPerSeller: limit, total: limited.length },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
