@@ -18,6 +18,15 @@ type Item = {
 type SortField = 'price' | 'date' | null;
 type SortDirection = 'asc' | 'desc';
 
+type ResultsMeta = {
+  sellers: string[];
+  maxPerSeller: number;
+  total: number;
+  titleSearch: string | null;
+  originalTotal: number;
+  isMockMode?: boolean;
+};
+
 export default function ResultsClient({ 
   initialSellers, 
   initialMaxPerSeller, 
@@ -33,7 +42,7 @@ export default function ResultsClient({
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [meta, setMeta] = useState<any>(null);
+  const [meta, setMeta] = useState<ResultsMeta | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortField, setSortField] = useState<SortField>(null);
@@ -111,7 +120,8 @@ export default function ResultsClient({
     if (!sortField) return items;
 
     return [...items].sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: number = 0;
+      let bValue: number = 0;
 
       if (sortField === 'price') {
         aValue = a.priceValue ?? 0;
@@ -243,7 +253,7 @@ export default function ResultsClient({
             <div className="text-xs text-gray-600 mt-1">
               <p>セラー: {sellers.join(", ")}</p>
               {titleSearch && (
-                <p>タイトル検索: "{titleSearch}"</p>
+                <p>タイトル検索: 「{titleSearch}」</p>
               )}
               {meta && (
                 <p>
