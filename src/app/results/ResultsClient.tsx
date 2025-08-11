@@ -173,7 +173,8 @@ export default function ResultsClient({
 
   function exportCSV() {
     const header = ["sellerId", "title", "price", "listedAt", "url", "favorite"]; // セラーID, 商品名, 価格, 出品日, URL, お気に入り
-    const rows = items.map((it) => [
+    const source = showFavoritesOnly ? filteredItems : items;
+    const rows = source.map((it) => [
       it.sellerId ?? "",
       it.title ?? "",
       formatPrice(it.priceValue, it.priceCurrency),
@@ -192,7 +193,7 @@ export default function ResultsClient({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "ebay_seller_items.csv";
+    a.download = showFavoritesOnly ? "ebay_seller_items_favorites.csv" : "ebay_seller_items.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
