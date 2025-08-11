@@ -231,13 +231,19 @@ function sortForDisplay(rows: NormalizedRow[]): NormalizedRow[] {
   });
 }
 
-export async function searchBySellersAxios(sellers: string[], maxPerSeller: number) {
+export async function searchBySellersAxios(
+  sellers: string[],
+  maxPerSeller: number
+): Promise<NormalizedRow[]> {
   const token = await getAppToken();
   const results: SampleItem[] = [];
   
   // モックトークンの場合は一括でモックデータを生成
   if (token === "mock_token") {
-    return generateMockData(sellers, maxPerSeller);
+    const mock = generateMockData(sellers, maxPerSeller);
+    const normalizedMock = normalize(mock);
+    const enrichedMock = await enrichWatchCounts(normalizedMock);
+    return sortForDisplay(enrichedMock);
   }
   
   for (const s of sellers) {

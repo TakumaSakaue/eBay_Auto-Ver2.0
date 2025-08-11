@@ -120,10 +120,10 @@ export async function POST(req: NextRequest) {
     }
     
     // タイトル検索フィルタリング
-    let filteredRows = rows;
+    let filteredRows = rows as typeof rows;
     if (titleSearch && titleSearch.trim()) {
       const searchTerm = titleSearch.trim().toLowerCase();
-      filteredRows = rows.filter(row => 
+      filteredRows = rows.filter((row) =>
         row.title && row.title.toLowerCase().includes(searchTerm)
       );
     }
