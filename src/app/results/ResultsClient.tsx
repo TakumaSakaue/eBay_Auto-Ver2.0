@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLoadingStore } from "../components/loading-store";
 // Excel出力は不要のため削除
 
 type Item = {
@@ -47,11 +48,14 @@ export default function ResultsClient({
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const showLoading = useLoadingStore((s) => s.show);
+  const hideLoading = useLoadingStore((s) => s.hide);
 
   useEffect(() => {
     const run = async () => {
       try {
         setLoading(true);
+        showLoading();
         const res = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -69,6 +73,7 @@ export default function ResultsClient({
         setError(e instanceof Error ? e.message : String(e));
       } finally {
         setLoading(false);
+        hideLoading();
       }
     };
     if (sellers.length) run();

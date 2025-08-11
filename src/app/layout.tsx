@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { LoadingOverlay } from "./components/LoadingOverlay";
+import { useLoadingStore } from "./components/loading-store";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,16 +24,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // layoutはServer Componentのため、クライアントのオーバーレイは下のClientShellで描画
   return (
     <html lang="ja">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="liquid-bg" />
-        <div className="relative z-10">
-          {children}
-        </div>
+        <ClientShell>{children}</ClientShell>
       </body>
     </html>
+  );
+}
+
+function ClientShell({ children }: { children: React.ReactNode }) {
+  "use client";
+  const visible = useLoadingStore((s) => s.visible);
+  return (
+    <div className="relative z-10">
+      {children}
+      <LoadingOverlay visible={visible} />
+    </div>
   );
 }
