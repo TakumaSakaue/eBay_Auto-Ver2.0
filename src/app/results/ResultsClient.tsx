@@ -150,7 +150,7 @@ export default function ResultsClient({
   const sortedItems = sortItems(filteredItems);
 
   // 日付をフォーマットする関数
-  const formatDate = (dateString: string | null): string => {
+  const formatDate = (dateString?: string | null): string => {
     if (!dateString) return "-";
     try {
       const date = new Date(dateString);
@@ -177,7 +177,7 @@ export default function ResultsClient({
       it.sellerId ?? "",
       it.title ?? "",
       formatPrice(it.priceValue, it.priceCurrency),
-      formatDate(it.listedAt),
+      formatDate(it.listedAt ?? null),
       it.url ?? "",
       it.itemId && favorites.has(it.itemId) ? "★" : "",
     ]);
@@ -396,7 +396,7 @@ export default function ResultsClient({
                             {formatPrice(it.priceValue, it.priceCurrency)}
                           </td>
                           <td className="px-2 py-2 whitespace-nowrap text-center">
-                            {formatDate(it.listedAt)}
+                            {formatDate(it.listedAt ?? null)}
                           </td>
                           <td className="px-2 py-2 max-w-[200px] truncate text-center">
                             {it.url ? (
