@@ -24,6 +24,26 @@ const BodySchema = z.object({
 
 export const dynamic = "force-dynamic";
 
+function normalizeLatin(input: string): string {
+  try {
+    // アクセント記号を除去（Pokémon -> pokemon など）
+    return input.normalize("NFKD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  } catch {
+    return input.toLowerCase();
+  }
+}
+
+function expandAliases(term: string): string[] {
+  const t = term.toLowerCase();
+  const aliases: string[] = [];
+  // Pokemon 同義語（大小/アクセント/日本語）
+  const pokemonSet = new Set(["pokemon", "pokémon", "ポケモン"]);
+  if (pokemonSet.has(t) || pokemonSet.has(normalizeLatin(t))) {
+    aliases.push(...Array.from(pokemonSet));
+  }
+  return aliases;
+}
+
 function normalizeSellerToken(token: string): string | null {
   const t = token.trim();
   if (!t) return null;
@@ -122,10 +142,18 @@ export async function POST(req: NextRequest) {
     // タイトル検索フィルタリング
     let filteredRows = rows as typeof rows;
     if (titleSearch && titleSearch.trim()) {
-      const searchTerm = titleSearch.trim().toLowerCase();
-      filteredRows = rows.filter((row) =>
-        row.title && row.title.toLowerCase().includes(searchTerm)
-      );
+      const raw = titleSearch.trim();
+      const terms = [raw, ...expandAliases(raw)];
+      filteredRows = rows.filter((row) => {
+        const title = row.title ?? "";
+        const titleLower = title.toLowerCase();
+        const titleNoAcc = normalizeLatin(title);
+        return terms.some((t) => {
+          const low = t.toLowerCase();
+          const noAcc = normalizeLatin(t);
+          return titleLower.includes(low) || titleNoAcc.includes(noAcc);
+        });
+      });
     }
     
     const limited = filteredRows;
