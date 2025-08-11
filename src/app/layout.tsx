@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { LoadingOverlay } from "./components/LoadingOverlay";
-import { useLoadingStore } from "./components/loading-store";
+import ClientShell from "./components/ClientShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,13 +36,4 @@ export default function RootLayout({
   );
 }
 
-function ClientShell({ children }: { children: React.ReactNode }) {
-  "use client";
-  const visible = useLoadingStore((s) => s.visible);
-  return (
-    <div className="relative z-10">
-      {children}
-      <LoadingOverlay visible={visible} />
-    </div>
-  );
-}
+// client shell moved to its own client component to avoid server importing the store
