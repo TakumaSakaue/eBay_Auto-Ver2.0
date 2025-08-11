@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [sellersInput, setSellersInput] = useState("");
-  const [maxPerSeller, setMaxPerSeller] = useState<number>(10);
+  const [titleSearch, setTitleSearch] = useState("");
+  const [maxPerSeller, setMaxPerSeller] = useState<number>(100);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -28,7 +29,11 @@ export default function Home() {
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sellers: sellersArray, maxPerSeller }),
+        body: JSON.stringify({ 
+          sellers: sellersArray, 
+          maxPerSeller,
+          titleSearch: titleSearch.trim() 
+        }),
       });
       if (!res.ok) {
         const txt = await res.text();
@@ -38,6 +43,9 @@ export default function Home() {
       const params = new URLSearchParams();
       params.set("sellers", sellersArray.join(","));
       params.set("maxPerSeller", String(maxPerSeller));
+      if (titleSearch.trim()) {
+        params.set("titleSearch", titleSearch.trim());
+      }
       router.push(`/results?${params.toString()}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -58,17 +66,32 @@ export default function Home() {
 
       <section className="aurora-panel rounded-2xl p-5 md:p-7 border shadow-lg">
         <div className="grid md:grid-cols-[1fr_260px] gap-4 items-start">
-          <div>
-            <label className="block text-sm font-medium mb-2">セラーのページリンク または セラーID（カンマ/改行区切り, 最大100件）</label>
-            <textarea
-              className="w-full rounded-xl p-3 border input-glass placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300/60"
-              placeholder="https://www.ebay.com/usr/USERNAME\nhttps://www.ebay.com/sch/USERNAME/m.html?_nkw=...\nまたは USERNAME をそのまま入力"
-              value={sellersInput}
-              onChange={(e) => setSellersInput(e.target.value)}
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">セラーのページリンク または セラーID（カンマ/改行区切り, 最大100件）</label>
+              <textarea
+                className="w-full rounded-xl p-3 border input-glass placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300/60"
+                placeholder=""
+                value={sellersInput}
+                onChange={(e) => setSellersInput(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">タイトル検索（オプション）</label>
+              <input
+                type="text"
+                className="w-full rounded-xl p-3 border input-glass placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300/60"
+                placeholder="例: Pokemon, カード, フィギュアなど"
+                value={titleSearch}
+                onChange={(e) => setTitleSearch(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                入力したキーワードが商品タイトルに含まれる商品のみを表示します。空欄の場合は全商品を表示します。
+              </p>
+            </div>
           </div>
           <div className="space-y-3">
-            <label className="block text-sm font-medium">最大取得件数/セラー</label>
+            <label className="block text-sm font-medium">アイテム表示数</label>
             <input
               type="number"
               min={1}
@@ -82,7 +105,7 @@ export default function Home() {
               disabled={loading || sellersArray.length === 0}
               className="w-full rounded-xl py-3 btn-primary font-medium transition shadow-md"
             >
-              {loading ? "検索中..." : "検索"}
+              {loading ? "検索中..." : "検索開始"}
             </button>
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>

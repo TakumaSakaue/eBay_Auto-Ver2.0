@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 4000",
+    "dev": "next dev --turbopack -p 4030",
+    "dev:local": "next dev --turbopack -p 4030",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -29,6 +30,6 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "5.9.2"
   }
 }

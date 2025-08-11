@@ -19,6 +19,7 @@ const BodySchema = z.object({
     })
     .pipe(z.array(z.string()).min(1, "At least one seller is required").max(100)),
   maxPerSeller: z.coerce.number().int().positive().max(1000).optional(),
+  titleSearch: z.string().optional(),
 });
 
 export const dynamic = "force-dynamic";
@@ -93,23 +94,41 @@ async function resolveSellerTokens(tokens: string[]): Promise<string[]> {
 export async function POST(req: NextRequest) {
   try {
     const json = await req.json();
-    const { sellers, maxPerSeller } = BodySchema.parse(json);
+    const { sellers, maxPerSeller, titleSearch } = BodySchema.parse(json);
     const normalized = (await resolveSellerTokens(sellers)).filter(Boolean);
     if (normalized.length === 0) {
       return NextResponse.json({ error: "有効なセラー入力がありません。URL もしくはユーザー名を指定してください。" }, { status: 400 });
     }
     const limit = Math.min(maxPerSeller ?? env.MAX_RESULTS_PER_SELLER, 1000);
 
-    if (!env.EBAY_CLIENT_ID || !env.EBAY_CLIENT_SECRET) {
-      return NextResponse.json(
-        { error: "EBAY_CLIENT_ID/EBAY_CLIENT_SECRET が未設定です。サーバーの環境変数(.env / Vercel)を確認してください。" },
-        { status: 400 }
-      );
+    // eBay API認証情報のチェック（モックモード対応）
+    const isMockMode = !env.EBAY_CLIENT_ID || !env.EBAY_CLIENT_SECRET;
+    if (isMockMode) {
+      console.log("⚠️ モックモードで実行中: eBay API認証情報が設定されていません");
     }
 
     // セラーごとに個別検索して大規模レスポンス回避
     const rows = await searchBySellersAxios(normalized, limit);
-    const limited = rows;
+    if (rows.length === 0) {
+      try {
+        console.warn(
+          JSON.stringify({ level: "warn", msg: "no items from ebay", sellers: normalized })
+        );
+      } catch {
+        console.warn("no items from ebay", normalized);
+      }
+    }
+    
+    // タイトル検索フィルタリング
+    let filteredRows = rows;
+    if (titleSearch && titleSearch.trim()) {
+      const searchTerm = titleSearch.trim().toLowerCase();
+      filteredRows = rows.filter(row => 
+        row.title && row.title.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    const limited = filteredRows;
 
     return NextResponse.json({
       items: limited.map((r) => ({
@@ -122,7 +141,14 @@ export async function POST(req: NextRequest) {
         url: r.url,
         listedAt: r.itemCreationDate,
       })),
-      meta: { sellers: normalized, maxPerSeller: limit, total: limited.length },
+      meta: { 
+        sellers: normalized, 
+        maxPerSeller: limit, 
+        total: limited.length,
+        titleSearch: titleSearch?.trim() || null,
+        originalTotal: rows.length,
+        isMockMode
+      },
     });
   } catch (err: unknown) {
     // Zod バリデーションエラーは 400 を返す

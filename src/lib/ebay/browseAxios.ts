@@ -15,9 +15,36 @@ export type SampleItem = {
   watchCount?: number; // Browse APIでは通常返らないため null になる想定
 };
 
+// モックデータ生成関数
+function generateMockData(sellers: string[], maxPerSeller: number): SampleItem[] {
+  const mockItems: SampleItem[] = [];
+  
+  sellers.forEach((seller, sellerIndex) => {
+    for (let i = 0; i < Math.min(maxPerSeller, 5); i++) {
+      const itemId = `mock_${sellerIndex}_${i}`;
+      mockItems.push({
+        itemId,
+        title: `[モック] ${seller}の商品 ${i + 1} - Pokemon Card Set`,
+        price: {
+          value: String(Math.floor(Math.random() * 1000) + 10),
+          currency: "USD"
+        },
+        itemWebUrl: `https://www.ebay.com/itm/${itemId}`,
+        seller: { username: seller },
+        itemCreationDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        watchCount: Math.floor(Math.random() * 50) + 1
+      });
+    }
+  });
+  
+  return mockItems;
+}
+
 async function getAppToken() {
   if (!env.EBAY_CLIENT_ID || !env.EBAY_CLIENT_SECRET) {
-    throw new Error(".env に EBAY_CLIENT_ID / EBAY_CLIENT_SECRET を設定してください。");
+    // モックモード: 認証情報が設定されていない場合はモックデータを使用
+    console.log("⚠️ eBay API認証情報が設定されていません。モックデータを使用します。");
+    return "mock_token";
   }
   // Try with buy.browse first; if invalid_scope, fall back to base scope
   const form = (scope: string) =>
@@ -49,9 +76,15 @@ async function getAppToken() {
 }
 
 async function fetchSellerListings(token: string, seller: string, maxPerSeller: number): Promise<SampleItem[]> {
+  // モックトークンの場合はモックデータを返す
+  if (token === "mock_token") {
+    return generateMockData([seller], maxPerSeller);
+  }
+
   const PAGE_LIMIT = 200;
-  const quoteSeller = (u: string) => JSON.stringify(u); // ensure spaces/specials are quoted
-  const baseFilter = `sellers:{${quoteSeller(seller)}}`;
+  // eBay Browse filter grammar: sellers:{seller1|seller2}
+  // 文字列の引用は不要。axios 側でURLエンコードされるため、そのまま値を使用する。
+  const baseFilter = `sellers:{${seller}}`;
 
   async function searchOnce(params: { offset: number; limit: number; price?: [number, number]; useLocation?: boolean }) {
     const { offset, limit, price, useLocation } = params;
@@ -145,7 +178,10 @@ async function fetchSellerListings(token: string, seller: string, maxPerSeller: 
       offset += items.length;
       if (items.length === 0 || offset >= total) break;
     }
-    return acc;
+    if (acc.length > 0) return acc;
+    // Browse APIが0件を返した場合でも、最終手段としてWebフォールバックを試す
+    const webRowsZero = await fallbackSearchByWeb(token, seller, maxPerSeller);
+    return webRowsZero;
   } catch {
     // Fallback to banded search if linear triggers 12023
     const banded = await tryPriceBands();
@@ -198,6 +234,12 @@ function sortForDisplay(rows: NormalizedRow[]): NormalizedRow[] {
 export async function searchBySellersAxios(sellers: string[], maxPerSeller: number) {
   const token = await getAppToken();
   const results: SampleItem[] = [];
+  
+  // モックトークンの場合は一括でモックデータを生成
+  if (token === "mock_token") {
+    return generateMockData(sellers, maxPerSeller);
+  }
+  
   for (const s of sellers) {
     try {
       const items = await fetchSellerListings(token, s, maxPerSeller);

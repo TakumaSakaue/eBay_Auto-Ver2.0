@@ -19,7 +19,14 @@ export default async function ResultsPage({
   const mpsRaw = sp.maxPerSeller;
   const mpsStr = Array.isArray(mpsRaw) ? mpsRaw[0] : mpsRaw;
   const maxPerSeller = Number(mpsStr ?? "10");
-  return <ResultsClient initialSellers={sellers} initialMaxPerSeller={maxPerSeller} />;
+  const titleSearchRaw = sp.titleSearch;
+  const titleSearch = Array.isArray(titleSearchRaw) ? titleSearchRaw[0] : (titleSearchRaw ?? "");
+  
+  return <ResultsClient 
+    initialSellers={sellers} 
+    initialMaxPerSeller={maxPerSeller} 
+    initialTitleSearch={titleSearch}
+  />;
 }
 
 
