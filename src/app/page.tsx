@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLoadingStore } from "./components/loading-store";
 
 // remove unused Item type to satisfy lint
 
@@ -13,7 +12,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const showLoading = useLoadingStore((s) => s.show);
 
   const sellersArray = useMemo(
     () =>
@@ -28,7 +26,6 @@ export default function Home() {
     setError(null);
     setLoading(true);
     try {
-      showLoading();
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

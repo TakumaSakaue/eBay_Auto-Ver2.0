@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import ClientShell from "./components/ClientShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,17 +22,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // layoutはServer Componentのため、クライアントのオーバーレイは下のClientShellで描画
   return (
     <html lang="ja">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="liquid-bg" />
-        <ClientShell>{children}</ClientShell>
+        <div className="relative z-10">{children}</div>
       </body>
     </html>
   );
 }
 
-// client shell moved to its own client component to avoid server importing the store
