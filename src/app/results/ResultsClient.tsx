@@ -328,7 +328,7 @@ export default function ResultsClient({
                 {showFavoritesOnly 
                   ? "★に登録された商品はありません。" 
                   : titleSearch 
-                    ? `"${titleSearch}"を含む商品は見つかりませんでした。` 
+                    ? `「${titleSearch}」を含む商品は見つかりませんでした。` 
                     : "該当する出品は見つかりませんでした。"
                 }
               </p>
