@@ -9,6 +9,7 @@ export default function Home() {
   const [sellersInput, setSellersInput] = useState("");
   const [titleSearch, setTitleSearch] = useState("");
   const [maxPerSeller, setMaxPerSeller] = useState<number>(50);
+  const [soldOnly, setSoldOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -32,7 +33,8 @@ export default function Home() {
         body: JSON.stringify({ 
           sellers: sellersArray, 
           maxPerSeller,
-          titleSearch: titleSearch.trim() 
+          titleSearch: titleSearch.trim(),
+          soldOnly
         }),
       });
       if (!res.ok) {
@@ -46,6 +48,7 @@ export default function Home() {
       if (titleSearch.trim()) {
         params.set("titleSearch", titleSearch.trim());
       }
+      if (soldOnly) params.set("soldOnly", "1");
       router.push(`/results?${params.toString()}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -100,6 +103,10 @@ export default function Home() {
               value={maxPerSeller}
               onChange={(e) => setMaxPerSeller(Number(e.target.value))}
             />
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={soldOnly} onChange={(e) => setSoldOnly(e.target.checked)} />
+              販売済みのみ
+            </label>
             <button
               onClick={onSearch}
               disabled={loading || sellersArray.length === 0}

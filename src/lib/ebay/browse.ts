@@ -127,6 +127,7 @@ export async function fetchSellersListings(
 export function sortItemsWithFallback(items: NormalizedItem[]): NormalizedItem[] {
   const byWatch = items.some((i) => typeof i.watchCount === "number");
   if (byWatch) {
+    // ウォッチ数が多い順にソート（デフォルト）
     return [...items].sort((a, b) => (b.watchCount ?? -1) - (a.watchCount ?? -1));
   }
   // Fallback: newer first if listedAt present, then price asc, then title asc

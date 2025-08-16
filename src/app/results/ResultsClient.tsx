@@ -15,7 +15,7 @@ type Item = {
   listedAt?: string | null;
 };
 
-type SortField = 'price' | 'date' | null;
+type SortField = 'price' | 'date' | 'watch' | null;
 type SortDirection = 'asc' | 'desc';
 
 type ResultsMeta = {
@@ -30,11 +30,13 @@ type ResultsMeta = {
 export default function ResultsClient({ 
   initialSellers, 
   initialMaxPerSeller, 
-  initialTitleSearch 
+  initialTitleSearch,
+  initialSoldOnly = false,
 }: { 
   initialSellers: string[]; 
   initialMaxPerSeller: number; 
   initialTitleSearch: string;
+  initialSoldOnly?: boolean;
 }) {
   const sellers = initialSellers;
   const maxPerSeller = initialMaxPerSeller;
@@ -45,8 +47,9 @@ export default function ResultsClient({
   const [meta, setMeta] = useState<ResultsMeta | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortField, setSortField] = useState<SortField>('watch'); // ウォッチ数順をデフォルトに
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [soldOnly] = useState<boolean>(!!initialSoldOnly);
 
   useEffect(() => {
     const run = async () => {
@@ -58,7 +61,8 @@ export default function ResultsClient({
           body: JSON.stringify({ 
             sellers, 
             maxPerSeller,
-            titleSearch: titleSearch.trim()
+            titleSearch: titleSearch.trim(),
+            soldOnly
           }),
         });
         if (!res.ok) throw new Error(await res.text());
@@ -72,7 +76,7 @@ export default function ResultsClient({
       }
     };
     if (sellers.length) run();
-  }, [sellers, maxPerSeller, titleSearch]);
+  }, [sellers, maxPerSeller, titleSearch, soldOnly]);
 
   // お気に入りをローカルに永続化（検索を跨いでも保持）
   useEffect(() => {
@@ -129,6 +133,9 @@ export default function ResultsClient({
       } else if (sortField === 'date') {
         aValue = a.listedAt ? new Date(a.listedAt).getTime() : 0;
         bValue = b.listedAt ? new Date(b.listedAt).getTime() : 0;
+      } else if (sortField === 'watch') {
+        aValue = a.watchCount ?? 0;
+        bValue = b.watchCount ?? 0;
       } else {
         return 0;
       }
@@ -169,6 +176,15 @@ export default function ResultsClient({
     if (price === null) return "-";
     const currencySymbol = currency === 'USD' ? '$' : currency || '$';
     return `${currencySymbol}${price.toFixed(2)}`;
+  };
+
+  const formatWatch = (watch: number | null): string => {
+    if (watch === null || Number.isNaN(watch)) return "-";
+    try {
+      return watch.toLocaleString('ja-JP');
+    } catch {
+      return String(watch);
+    }
   };
 
   function exportCSV() {
@@ -358,6 +374,12 @@ export default function ResultsClient({
                         </th>
                         <th className="px-2 py-2 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            Watch数
+                            <SortButton field="watch" label="ウォッチ数" />
+                          </div>
+                        </th>
+                        <th className="px-2 py-2 text-center">
+                          <div className="flex items-center justify-center gap-1">
                             出品日
                             <SortButton field="date" label="日付" />
                           </div>
@@ -395,6 +417,9 @@ export default function ResultsClient({
                           <td className="px-2 py-2 max-w-[400px]">{it.title ?? "-"}</td>
                           <td className="px-2 py-2 whitespace-nowrap text-center font-medium">
                             {formatPrice(it.priceValue, it.priceCurrency)}
+                          </td>
+                          <td className="px-2 py-2 whitespace-nowrap text-center">
+                            {formatWatch(it.watchCount)}
                           </td>
                           <td className="px-2 py-2 whitespace-nowrap text-center">
                             {formatDate(it.listedAt ?? null)}

@@ -3,6 +3,7 @@ import axios from "axios";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { searchBySellersAxios } from "@/lib/ebay/browseAxios";
+import { fetchSellerSoldItems } from "@/lib/ebay/soldWeb";
 
 const BodySchema = z.object({
   sellers: z
@@ -20,6 +21,7 @@ const BodySchema = z.object({
     .pipe(z.array(z.string()).min(1, "At least one seller is required").max(100)),
   maxPerSeller: z.coerce.number().int().positive().max(1000).optional(),
   titleSearch: z.string().optional(),
+  soldOnly: z.coerce.boolean().optional(),
 });
 
 export const dynamic = "force-dynamic";
@@ -57,8 +59,17 @@ function normalizeSellerToken(token: string): string | null {
     if (usrIdx !== -1 && segments[usrIdx + 1]) return decodeURIComponent(segments[usrIdx + 1]);
     const schIdx = segments.indexOf("sch");
     if (schIdx !== -1 && segments[schIdx + 1]) return decodeURIComponent(segments[schIdx + 1]);
-    // /str/<store-name> はストア名のため、ここでは未確定（後段のWeb解決で取得）
-    if (segments.includes("str")) return ""; // 解決保留
+    // /str/<store-name>/... はストア名を優先的に抽出
+    const strIdx = segments.indexOf("str");
+    if (strIdx !== -1) {
+      const candidate = segments[strIdx + 1];
+      if (candidate && candidate !== "_i.html") {
+        return decodeURIComponent(candidate);
+      }
+      // 末尾がカテゴリや _i.html の場合でも、/str/ の直後を優先
+      if (candidate) return decodeURIComponent(candidate);
+      return ""; // 解決保留
+    }
     if (segments.length > 0) return decodeURIComponent(segments[segments.length - 1]);
   } catch {
     return t;
@@ -114,7 +125,7 @@ async function resolveSellerTokens(tokens: string[]): Promise<string[]> {
 export async function POST(req: NextRequest) {
   try {
     const json = await req.json();
-    const { sellers, maxPerSeller, titleSearch } = BodySchema.parse(json);
+    const { sellers, maxPerSeller, titleSearch, soldOnly } = BodySchema.parse(json);
     const normalized = (await resolveSellerTokens(sellers)).filter(Boolean);
     if (normalized.length === 0) {
       return NextResponse.json({ error: "有効なセラー入力がありません。URL もしくはユーザー名を指定してください。" }, { status: 400 });
@@ -127,8 +138,19 @@ export async function POST(req: NextRequest) {
       console.log("⚠️ モックモードで実行中: eBay API認証情報が設定されていません");
     }
 
-    // セラーごとに個別検索して大規模レスポンス回避
-    const rows = await searchBySellersAxios(normalized, limit);
+    console.log(`[debug] Starting search for sellers: ${normalized.join(", ")}`);
+    // セラーごとに個別検索
+    let rows = await searchBySellersAxios(normalized, limit);
+    console.log(`[debug] Search completed. Found ${rows.length} items`);
+    
+    if (soldOnly) {
+      const soldRows: typeof rows = [] as any;
+      for (const s of normalized) {
+        const r = await fetchSellerSoldItems(s, limit);
+        soldRows.push(...r);
+      }
+      rows = soldRows;
+    }
     if (rows.length === 0) {
       try {
         console.warn(
@@ -137,6 +159,14 @@ export async function POST(req: NextRequest) {
       } catch {
         console.warn("no items from ebay", normalized);
       }
+    }
+    // 取得件数が少ないときの追加ログ
+    if (rows.length < limit) {
+      try {
+        console.warn(
+          JSON.stringify({ level: "warn", msg: "underfilled results", sellers: normalized, requested: limit, got: rows.length })
+        );
+      } catch {}
     }
     
     // タイトル検索フィルタリング

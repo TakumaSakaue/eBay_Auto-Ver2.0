@@ -21,11 +21,14 @@ export default async function ResultsPage({
   const maxPerSeller = Number(mpsStr ?? "10");
   const titleSearchRaw = sp.titleSearch;
   const titleSearch = Array.isArray(titleSearchRaw) ? titleSearchRaw[0] : (titleSearchRaw ?? "");
+  const soldOnlyRaw = sp.soldOnly;
+  const soldOnly = Boolean(Array.isArray(soldOnlyRaw) ? soldOnlyRaw[0] : soldOnlyRaw);
   
   return <ResultsClient 
     initialSellers={sellers} 
     initialMaxPerSeller={maxPerSeller} 
     initialTitleSearch={titleSearch}
+    initialSoldOnly={soldOnly}
   />;
 }
 
