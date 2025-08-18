@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import DebugWatchCount from "./components/DebugWatchCount";
 
 // remove unused Item type to satisfy lint
 
 export default function Home() {
   const [sellersInput, setSellersInput] = useState("");
   const [titleSearch, setTitleSearch] = useState("");
-  const [maxPerSeller, setMaxPerSeller] = useState<number>(50);
+  const [maxPerSeller, setMaxPerSeller] = useState<number>(10);
   const [soldOnly, setSoldOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,6 +119,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+      
+      {/* ウォッチ数取得デバッグ */}
+      <section className="mt-8 aurora-panel rounded-2xl p-5 md:p-7 border shadow-lg">
+        <DebugWatchCount />
+      </section>
+      
       {/* トップは検索のみ。結果表示は /results に遷移 */}
     </div>
   );
