@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack -p 4030",
     "dev:local": "next dev --turbopack -p 4030",
+    "dev:bot-safe": "WATCHCOUNT_MODE=html_first FORCE_MOCK=false next dev --turbopack -p 4030",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
